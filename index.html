@@ -6,9 +6,8 @@
   <title>Chess Board</title>
 
   <link rel="stylesheet" href="./assets/vendor/chessboardjs-1.0.0/css/chessboard-1.0.0.min.css" />
-
   <style>
-    body { margin: 0; padding: 24px; font-family: system-ui, Arial, sans-serif; }
+    body { font-family: Arial, sans-serif; padding: 20px; }
     #board { width: 420px; }
   </style>
 </head>
@@ -17,14 +16,20 @@
   <h1>Chess Board</h1>
   <div id="board"></div>
 
-  <!-- jQuery MUST load first -->
+  <!-- 1) jQuery FIRST -->
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script>
+    // If this prints "undefined", jQuery did NOT load.
+    console.log("jQuery type:", typeof window.jQuery);
+    console.log("jQuery.fn exists:", !!(window.jQuery && window.jQuery.fn));
+  </script>
 
-  <!-- Then chessboard.js -->
+  <!-- 2) chessboard SECOND -->
   <script src="./assets/vendor/chessboardjs-1.0.0/js/chessboard-1.0.0.min.js"></script>
 
+  <!-- 3) init LAST -->
   <script>
-    Chessboard('board', {
+    var board = Chessboard('board', {
       position: 'start',
       pieceTheme: './assets/vendor/chessboardjs-1.0.0/img/chesspieces/wikipedia/{piece}.png'
     });
