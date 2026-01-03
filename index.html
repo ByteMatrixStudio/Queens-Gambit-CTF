@@ -1,15 +1,13 @@
 <!doctype html>
-<html lang="en">
+<html>
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Queens Gambit - Board</title>
+  <title>Chess Board</title>
 
-  <!-- chessboard.js CSS (RELATIVE PATH: no leading slash) -->
-  <link rel="stylesheet" href="./assets/vendor/chessboardjs-1.0.0/css/chessboard-1.0.0.min.css">
+  <link rel="stylesheet" href="./assets/vendor/chessboardjs-1.0.0/css/chessboard-1.0.0.min.css" />
 
   <style>
-    body { margin: 0; padding: 24px; font-family: system-ui, Arial, sans-serif; }
+    body { font-family: Arial, sans-serif; padding: 20px; }
     #board { width: 420px; }
   </style>
 </head>
@@ -18,17 +16,17 @@
   <h1>Chess Board</h1>
   <div id="board"></div>
 
-  <!-- chessboard.js (RELATIVE PATH) -->
+  <!-- ✅ jQuery MUST be loaded BEFORE chessboard.js -->
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+  <!-- chessboard.js -->
   <script src="./assets/vendor/chessboardjs-1.0.0/js/chessboard-1.0.0.min.js"></script>
 
   <script>
-    // IMPORTANT: point pieceTheme at where your PNGs actually live
-    const config = {
+    Chessboard('board', {
       position: 'start',
       pieceTheme: './assets/vendor/chessboardjs-1.0.0/img/chesspieces/wikipedia/{piece}.png'
-    };
-
-    Chessboard('board', config);
+    });
   </script>
 
 </body>
