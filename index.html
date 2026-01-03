@@ -5,199 +5,122 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Queen’s Gambit CTF</title>
 
-  <!-- Local assets (no CDN) -->
-  <link rel="stylesheet" href="assets/chessground.base.min.css">
-  <link rel="stylesheet" href="assets/chessground.brown.min.css">
-  <link rel="stylesheet" href="assets/chessground.pieces.min.css">
-  <script defer src="assets/chessground.min.js"></script>
-  <script defer src="assets/chess.umd.js"></script>
+  <link rel="stylesheet" href="assets/chessboard-1.0.0.css">
+  <script defer src="assets/chess.min.js"></script>
+  <script defer src="assets/chessboard-1.0.0.js"></script>
 
   <style>
-    :root{
-      --bg:#0f141b; --panel:#141b24; --text:#e6edf3; --muted:#9aa7b2;
-      --border:rgba(255,255,255,.10);
-      --ok:rgba(71,209,140,.35);
-      --okbg:rgba(71,209,140,.10);
-      --radius:16px;
-      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
-      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
-    }
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      background: radial-gradient(1200px 800px at 20% 10%, #172233 0%, var(--bg) 55%, #0a0f15 100%);
-      color:var(--text);
-      font-family:var(--sans);
-    }
-    .wrap{
-      max-width:1100px; margin:24px auto; padding:0 16px 24px;
-      display:grid; grid-template-columns:520px 1fr; gap:16px; align-items:start;
-    }
-    @media(max-width:980px){ .wrap{grid-template-columns:1fr} }
-    .card{
-      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
-      border:1px solid var(--border);
-      border-radius:var(--radius);
-      padding:14px;
-    }
-    #board{
-      width:100%;
-      aspect-ratio:1/1;
-      border-radius:14px;
-      overflow:hidden;
-      border:1px solid rgba(255,255,255,.12);
-      background: rgba(0,0,0,.2);
-    }
-    .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
-    button{
-      cursor:pointer;
-      border-radius:12px;
-      border:1px solid rgba(255,255,255,.14);
-      background:rgba(255,255,255,.07);
-      color:var(--text);
-      padding:9px 12px;
-      font-size:13px;
-    }
-    .muted{color:var(--muted); font-size:13px}
-    .mono{font-family:var(--mono); font-size:12px; white-space:pre-wrap; word-break:break-word; color:#cfe0ee}
-    .flagBox{
-      display:none;
-      border:1px solid var(--ok);
-      background:var(--okbg);
-      border-radius:14px;
-      padding:12px;
-      margin-top:12px;
-    }
-    .title{font-weight:800}
-    .sub{margin-top:4px}
+    body{margin:0;background:#0f141b;color:#e6edf3;font-family:system-ui,Segoe UI,Roboto,Arial}
+    .wrap{max-width:1100px;margin:24px auto;padding:0 16px;display:grid;grid-template-columns:520px 1fr;gap:16px}
+    @media(max-width:980px){.wrap{grid-template-columns:1fr}}
+    .card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.10);border-radius:16px;padding:14px}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+    button{cursor:pointer;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.07);color:#e6edf3;padding:9px 12px;font-size:13px}
+    .muted{color:#9aa7b2;font-size:13px}
+    .mono{font-family:ui-monospace,Consolas,Menlo,monospace;font-size:12px;white-space:pre-wrap;word-break:break-word}
+    #board { width: 100%; max-width: 520px; }
+    .ok{display:none;margin-top:12px;padding:12px;border-radius:14px;border:1px solid rgba(71,209,140,.35);background:rgba(71,209,140,.10)}
   </style>
 </head>
 <body>
-
-<div class="wrap">
-  <div class="card">
-    <div class="row" style="justify-content:space-between; margin-bottom:10px;">
-      <div>
-        <div class="title">Queen’s Gambit CTF</div>
-        <div class="muted sub">Play a Queen’s Gambit setup to unlock the flag.</div>
+  <div class="wrap">
+    <div class="card">
+      <div class="row" style="margin-bottom:10px;">
+        <div>
+          <div style="font-weight:800;">Queen’s Gambit CTF</div>
+          <div class="muted">Get the Queen’s Gambit structure to unlock the flag.</div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button id="newBtn">New</button>
+          <button id="flipBtn">Flip</button>
+          <button id="undoBtn">Undo</button>
+        </div>
       </div>
-      <div class="row">
-        <button id="newBtn">New</button>
-        <button id="flipBtn">Flip</button>
-        <button id="undoBtn">Undo</button>
+
+      <div id="board"></div>
+
+      <div id="unlock" class="ok">
+        <div class="muted" style="margin-bottom:6px;">Unlocked</div>
+        <div id="flag" class="mono"></div>
       </div>
     </div>
 
-    <div id="board"></div>
+    <div class="card">
+      <div class="muted">Moves (SAN)</div>
+      <div id="moves" class="mono" style="margin:6px 0 12px;">(none yet)</div>
 
-    <div id="flagBox" class="flagBox">
-      <div class="muted" style="margin-bottom:6px;">Unlocked</div>
-      <div class="mono" id="flagText"></div>
+      <div class="muted">FEN</div>
+      <div id="fen" class="mono" style="margin:6px 0 12px;"></div>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button id="copyFen">Copy FEN</button>
+      </div>
+
+      <div class="muted" style="margin-top:12px;">
+        Hint: White pawns on d4 + c4, Black pawns on d5 + e6, then develop a white knight (c3 or f3).
+      </div>
     </div>
   </div>
-
-  <div class="card">
-    <div class="muted">Hint</div>
-    <div class="mono" style="margin:6px 0 12px;">
-White fights for the centre with a pawn duo.
-Black mirrors, then supports with e6.
-Develop a knight behind the pawns.
-    </div>
-
-    <div class="muted">Moves (PGN)</div>
-    <div class="mono" id="pgnText" style="margin:6px 0 12px;">(none yet)</div>
-
-    <div class="muted">FEN</div>
-    <div class="mono" id="fenText" style="margin:6px 0 12px;"></div>
-
-    <div class="row">
-      <button id="copyPgnBtn">Copy PGN</button>
-      <button id="copyFenBtn">Copy FEN</button>
-    </div>
-  </div>
-</div>
 
 <script>
 window.addEventListener("DOMContentLoaded", () => {
   const $ = (id) => document.getElementById(id);
 
-  // Hard fail if assets missing (better than silent nothing)
-  if (typeof Chessground === "undefined") { alert("Chessground not loaded. Check /assets file names."); return; }
-  if (typeof Chess === "undefined") { alert("chess.js not loaded. Check /assets/chess.umd.js."); return; }
+  // sanity: hard error if libs not loaded
+  if (typeof Chess === "undefined") { alert("chess.js not loaded (assets/chess.min.js)."); return; }
+  if (typeof Chessboard === "undefined") { alert("chessboard.js not loaded (assets/chessboard-1.0.0.js)."); return; }
 
-  // === Customize these ===
   const FLAG = "flag{queens_gambit_unlocked}";
-  // ======================
-
   const game = new Chess();
+
+  let board = null;
   let flipped = false;
   let unlocked = false;
 
-  // Force QGD for the first two black moves if applicable
-  // (keyed by FEN when it's black to move)
-  const OPENING_BOOK = new Map([
+  // Precomputed “AI”: force QGD first, then random legal
+  // keyed by FEN when black to move
+  const BOOK = new Map([
     // after 1.d4
     ["rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq - 0 1", "d5"],
     // after 1.d4 d5 2.c4
     ["rnbqkbnr/pppppppp/8/3p4/2PP4/8/PP2PPPP/RNBQKBNR b KQkq - 0 2", "e6"],
   ]);
 
-  function calcDests() {
-    const dests = new Map();
-    for (const sq of Chess.SQUARES) {
-      const ms = game.moves({ square: sq, verbose: true });
-      if (ms.length) dests.set(sq, ms.map(m => m.to));
-    }
-    return dests;
-  }
-
-  function lastMoveSquares() {
-    const hist = game.history({ verbose: true });
-    if (!hist.length) return null;
-    const m = hist[hist.length - 1];
-    return [m.from, m.to];
-  }
-
-  function chooseFallbackMove() {
+  function randomBlackMove() {
     const moves = game.moves({ verbose: true });
     if (!moves.length) return null;
-
-    // Prefer captures
     const captures = moves.filter(m => m.flags.includes("c") || m.flags.includes("e"));
-    if (captures.length) return captures[Math.floor(Math.random() * captures.length)].san;
-
-    // Prefer checks
-    const checks = moves.filter(m => m.san.includes("+") || m.san.includes("#"));
-    if (checks.length) return checks[Math.floor(Math.random() * checks.length)].san;
-
-    // Otherwise random legal
-    return moves[Math.floor(Math.random() * moves.length)].san;
+    const pickFrom = captures.length ? captures : moves;
+    return pickFrom[Math.floor(Math.random() * pickFrom.length)].san;
   }
 
-  // Transposition-friendly “Queen’s Gambit-ish” check:
-  // - White pawn on d4 and c4
-  // - Black pawn on d5 and e6
-  // - White has a knight developed to c3 OR f3
+  function playBlack() {
+    if (unlocked) return;
+    if (game.turn() !== "b" || game.game_over()) return;
+    const mv = BOOK.get(game.fen()) || randomBlackMove();
+    if (mv) game.move(mv);
+    syncUI();
+  }
+
+  // structure-based gate (transposition friendly)
+  function at(square) {
+    const b = game.board();
+    const file = square.charCodeAt(0) - 97;
+    const rank = Number(square[1]);
+    const row = 8 - rank;
+    return b[row][file];
+  }
+
   function isQueensGambitSetup() {
-    const b = game.board(); // 8x8, [rank8..rank1], each square is null or {type, color}
-
-    function at(square) {
-      const file = square.charCodeAt(0) - 97;     // a=0
-      const rank = Number(square[1]);             // 1..8
-      const row = 8 - rank;                       // rank8 -> 0
-      return b[row][file];
-    }
-
     const w_d4 = at("d4"), w_c4 = at("c4");
-    const bl_d5 = at("d5"), bl_e6 = at("e6");
-
+    const b_d5 = at("d5"), b_e6 = at("e6");
     const n_c3 = at("c3"), n_f3 = at("f3");
 
     const okPawns =
       w_d4 && w_d4.color==="w" && w_d4.type==="p" &&
       w_c4 && w_c4.color==="w" && w_c4.type==="p" &&
-      bl_d5 && bl_d5.color==="b" && bl_d5.type==="p" &&
-      bl_e6 && bl_e6.color==="b" && bl_e6.type==="p";
+      b_d5 && b_d5.color==="b" && b_d5.type==="p" &&
+      b_e6 && b_e6.color==="b" && b_e6.type==="p";
 
     const okKnight =
       (n_c3 && n_c3.color==="w" && n_c3.type==="n") ||
@@ -210,89 +133,66 @@ window.addEventListener("DOMContentLoaded", () => {
     if (unlocked) return;
     if (isQueensGambitSetup()) {
       unlocked = true;
-      $("flagText").textContent = FLAG;
-      $("flagBox").style.display = "block";
-      // freeze board after unlock (optional)
-      syncUI();
+      $("flag").textContent = FLAG;
+      $("unlock").style.display = "block";
     }
   }
 
   function syncUI() {
-    $("fenText").textContent = game.fen();
-    const pgn = game.pgn({ newline_char: "\n" }).trim();
-    $("pgnText").textContent = pgn.length ? pgn : "(none yet)";
-
-    cg.set({
-      fen: game.fen(),
-      turnColor: game.turn() === "w" ? "white" : "black",
-      movable: {
-        color: (!unlocked && game.turn() === "w") ? "white" : null,
-        dests: (!unlocked && game.turn() === "w") ? calcDests() : new Map(),
-      },
-      lastMove: lastMoveSquares(),
-      check: game.in_check() ? (game.turn() === "w" ? "white" : "black") : false,
-    });
-
+    board.position(game.fen());
+    $("fen").textContent = game.fen();
+    $("moves").textContent = game.history().join(" ") || "(none yet)";
     tryUnlock();
   }
 
-  function playBlack() {
-    if (unlocked) return;
-    if (game.turn() !== "b" || game.game_over()) return;
-
-    const reply = OPENING_BOOK.get(game.fen()) || chooseFallbackMove();
-    if (reply) game.move(reply);
-    syncUI();
+  function onDragStart (source, piece) {
+    if (unlocked) return false;
+    if (game.game_over()) return false;
+    if (game.turn() !== "w") return false;
+    if (piece.search(/^w/) === -1) return false;
   }
 
-  const cg = Chessground($("board"), {
+  function onDrop (source, target) {
+    if (unlocked) return "snapback";
+    const move = game.move({ from: source, to: target, promotion: "q" });
+    if (move === null) return "snapback";
+    syncUI();
+    setTimeout(playBlack, 200);
+  }
+
+  function onSnapEnd() {
+    board.position(game.fen());
+  }
+
+  board = Chessboard("board", {
+    draggable: true,
+    position: "start",
     orientation: "white",
-    coordinates: true,
-    animation: { enabled: true, duration: 160 },
-    highlight: { lastMove: true, check: true },
-    draggable: { enabled: true },
-    movable: {
-      color: "white",
-      free: false,
-      dests: calcDests(),
-      events: {
-        after: (orig, dest) => {
-          if (unlocked) return;
-          if (game.turn() !== "w") return;
-
-          const candidates = game.moves({ verbose: true });
-          const ok = candidates.find(m => m.from === orig && m.to === dest);
-          if (!ok) return;
-
-          game.move({ from: orig, to: dest, promotion: "q" }); // auto-queen
-          syncUI();
-          setTimeout(playBlack, 200);
-        }
-      }
-    }
+    onDragStart,
+    onDrop,
+    onSnapEnd
   });
 
   $("newBtn").addEventListener("click", () => {
     game.reset();
     unlocked = false;
-    $("flagBox").style.display = "none";
+    $("unlock").style.display = "none";
     syncUI();
   });
 
   $("flipBtn").addEventListener("click", () => {
     flipped = !flipped;
-    cg.set({ orientation: flipped ? "black" : "white" });
+    board.orientation(flipped ? "black" : "white");
   });
 
   $("undoBtn").addEventListener("click", () => {
     if (unlocked) return;
-    game.undo(); // undo black
-    game.undo(); // undo white
+    game.undo(); // black
+    game.undo(); // white
     syncUI();
   });
 
-  $("copyFenBtn").addEventListener("click", async () => navigator.clipboard.writeText(game.fen()));
-  $("copyPgnBtn").addEventListener("click", async () => navigator.clipboard.writeText(game.pgn()));
+  $("copyFen").addEventListener("click", async () => navigator.clipboard.writeText(game.fen()));
 
   syncUI();
 });
