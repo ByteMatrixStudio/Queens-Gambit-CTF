@@ -5,7 +5,13 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Board Test</title>
 
+  <!-- chessboard.js CSS -->
   <link rel="stylesheet" href="assets/vendor/chessboardjs-1.0.0/css/chessboard-1.0.0.css">
+
+  <!-- REQUIRED dependency: jQuery (must load BEFORE chessboard.js) -->
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+  <!-- chessboard.js (local) -->
   <script src="assets/vendor/chessboardjs-1.0.0/js/chessboard-1.0.0.js"></script>
 
   <style>
@@ -14,16 +20,13 @@
   </style>
 </head>
 <body>
-
   <h1>Chessboard test</h1>
   <div id="board"></div>
 
   <script>
-    if (typeof Chessboard === "undefined") {
-      document.body.insertAdjacentHTML("beforeend",
-        "<p style='color:#ff8080'>Chessboard.js failed to load. Check your paths.</p>");
-      throw new Error("Chessboard.js failed to load");
-    }
+    // sanity checks
+    if (!window.jQuery) { alert("jQuery failed to load"); }
+    if (typeof Chessboard === "undefined") { alert("Chessboard.js failed to load"); }
 
     Chessboard("board", {
       position: "start",
@@ -31,6 +34,5 @@
       pieceTheme: "assets/vendor/chessboardjs-1.0.0/img/chesspieces/wikipedia/{piece}.png"
     });
   </script>
-
 </body>
 </html>
