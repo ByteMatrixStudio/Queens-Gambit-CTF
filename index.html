@@ -5,11 +5,14 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Queen’s Gambit CTF</title>
 
-  
-  <!-- Local assets (NO CDN at runtime) -->
-  <link rel="stylesheet" href="assets/chessboard-1.0.0.css">
-  <script defer src="assets/chess.min.js"></script>
-  <script defer src="assets/chessboard-1.0.0.js"></script>
+  <!-- chessboard.js CSS (pre-made board widget) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.css">
+  <!-- jQuery is REQUIRED by chessboard.js -->
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <!-- chess.js (classic build from cdnjs) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.13.4/chess.min.js"></script>
+  <!-- chessboard.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.js"></script>
 
   <style>
     body{margin:0;background:#0f141b;color:#e6edf3;font-family:system-ui,Segoe UI,Roboto,Arial}
@@ -20,7 +23,7 @@
     button{cursor:pointer;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.07);color:#e6edf3;padding:9px 12px;font-size:13px}
     .muted{color:#9aa7b2;font-size:13px}
     .mono{font-family:ui-monospace,Consolas,Menlo,monospace;font-size:12px;white-space:pre-wrap;word-break:break-word}
-    #board { width: 100%; max-width: 520px; }
+    #board{width:100%;max-width:520px}
     .ok{display:none;margin-top:12px;padding:12px;border-radius:14px;border:1px solid rgba(71,209,140,.35);background:rgba(71,209,140,.10)}
   </style>
 </head>
@@ -31,7 +34,7 @@
       <div class="row" style="margin-bottom:10px;">
         <div>
           <div style="font-weight:800;">Queen’s Gambit CTF</div>
-          <div class="muted">Play a Queen’s Gambit setup to unlock the flag.</div>
+          <div class="muted">Get the Queen’s Gambit structure to unlock the flag.</div>
         </div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;">
           <button id="newBtn">New</button>
@@ -66,36 +69,31 @@
   </div>
 
 <script>
-window.addEventListener("DOMContentLoaded", () => {
-  const $ = (id) => document.getElementById(id);
+(function () {
+  // hard sanity checks
+  if (typeof Chess === "undefined") { alert("chess.js failed to load"); return; }
+  if (typeof Chessboard === "undefined") { alert("chessboard.js failed to load"); return; }
 
-  // Hard sanity checks (no silent failures)
-  if (typeof Chess === "undefined") { alert("chess.js not loaded (assets/chess.min.js)."); return; }
-  if (typeof Chessboard === "undefined") { alert("chessboard.js not loaded (assets/chessboard-1.0.0.js)."); return; }
+  const $id = (x) => document.getElementById(x);
 
-  // Change your flag here
   const FLAG = "flag{queens_gambit_unlocked}";
-
   const game = new Chess();
+
   let board = null;
   let flipped = false;
   let unlocked = false;
 
   // Precomputed-ish Black: forces QGD early, then random legal
   const BOOK = new Map([
-    // after 1.d4
-    ["rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq - 0 1", "d5"],
-    // after 1.d4 d5 2.c4
-    ["rnbqkbnr/pppppppp/8/3p4/2PP4/8/PP2PPPP/RNBQKBNR b KQkq - 0 2", "e6"],
+    ["rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq - 0 1", "d5"], // after 1.d4
+    ["rnbqkbnr/pppppppp/8/3p4/2PP4/8/PP2PPPP/RNBQKBNR b KQkq - 0 2", "e6"], // after 2.c4
   ]);
 
   function randomBlackMove() {
     const moves = game.moves({ verbose: true });
     if (!moves.length) return null;
-
-    // Prefer captures, else random
-    const captures = moves.filter(m => m.flags.includes("c") || m.flags.includes("e"));
-    const pickFrom = captures.length ? captures : moves;
+    const caps = moves.filter(m => m.flags.includes("c") || m.flags.includes("e"));
+    const pickFrom = caps.length ? caps : moves;
     return pickFrom[Math.floor(Math.random() * pickFrom.length)].san;
   }
 
@@ -107,17 +105,14 @@ window.addEventListener("DOMContentLoaded", () => {
     syncUI();
   }
 
-  // Helpers to read board squares (for structure-based unlock)
   function at(square) {
     const b = game.board();
-    const file = square.charCodeAt(0) - 97; // a=0
-    const rank = Number(square[1]);         // 1..8
-    const row = 8 - rank;                   // rank8 -> 0
+    const file = square.charCodeAt(0) - 97;
+    const rank = Number(square[1]);
+    const row = 8 - rank;
     return b[row][file];
   }
 
-  // Transposition-friendly Queen’s Gambit structure:
-  // White: pawns d4 & c4, Black: pawns d5 & e6, White knight developed to c3 OR f3
   function isQueensGambitSetup() {
     const w_d4 = at("d4"), w_c4 = at("c4");
     const b_d5 = at("d5"), b_e6 = at("e6");
@@ -140,26 +135,26 @@ window.addEventListener("DOMContentLoaded", () => {
     if (unlocked) return;
     if (isQueensGambitSetup()) {
       unlocked = true;
-      $("flag").textContent = FLAG;
-      $("unlock").style.display = "block";
+      $id("flag").textContent = FLAG;
+      $id("unlock").style.display = "block";
     }
   }
 
   function syncUI() {
     board.position(game.fen());
-    $("fen").textContent = game.fen();
-    $("moves").textContent = game.history().join(" ") || "(none yet)";
+    $id("fen").textContent = game.fen();
+    $id("moves").textContent = game.history().join(" ") || "(none yet)";
     tryUnlock();
   }
 
-  function onDragStart (source, piece) {
+  function onDragStart(source, piece) {
     if (unlocked) return false;
     if (game.game_over()) return false;
     if (game.turn() !== "w") return false;
-    if (!piece.startsWith("w")) return false; // only move white pieces
+    return piece.startsWith("w");
   }
 
-  function onDrop (source, target) {
+  function onDrop(source, target) {
     if (unlocked) return "snapback";
     const move = game.move({ from: source, to: target, promotion: "q" });
     if (move === null) return "snapback";
@@ -180,29 +175,29 @@ window.addEventListener("DOMContentLoaded", () => {
     onSnapEnd
   });
 
-  $("newBtn").addEventListener("click", () => {
+  $id("newBtn").addEventListener("click", () => {
     game.reset();
     unlocked = false;
-    $("unlock").style.display = "none";
+    $id("unlock").style.display = "none";
     syncUI();
   });
 
-  $("flipBtn").addEventListener("click", () => {
+  $id("flipBtn").addEventListener("click", () => {
     flipped = !flipped;
     board.orientation(flipped ? "black" : "white");
   });
 
-  $("undoBtn").addEventListener("click", () => {
+  $id("undoBtn").addEventListener("click", () => {
     if (unlocked) return;
-    game.undo(); // undo black
-    game.undo(); // undo white
+    game.undo(); // black
+    game.undo(); // white
     syncUI();
   });
 
-  $("copyFen").addEventListener("click", async () => navigator.clipboard.writeText(game.fen()));
+  $id("copyFen").addEventListener("click", async () => navigator.clipboard.writeText(game.fen()));
 
   syncUI();
-});
+})();
 </script>
 </body>
 </html>
