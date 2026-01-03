@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Queen’s Gambit CTF</title>
 
+  <!-- Local assets (NO CDN at runtime) -->
   <link rel="stylesheet" href="assets/chessboard-1.0.0.css">
   <script defer src="assets/chess.min.js"></script>
   <script defer src="assets/chessboard-1.0.0.js"></script>
@@ -22,13 +23,14 @@
     .ok{display:none;margin-top:12px;padding:12px;border-radius:14px;border:1px solid rgba(71,209,140,.35);background:rgba(71,209,140,.10)}
   </style>
 </head>
+
 <body>
   <div class="wrap">
     <div class="card">
       <div class="row" style="margin-bottom:10px;">
         <div>
           <div style="font-weight:800;">Queen’s Gambit CTF</div>
-          <div class="muted">Get the Queen’s Gambit structure to unlock the flag.</div>
+          <div class="muted">Play a Queen’s Gambit setup to unlock the flag.</div>
         </div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;">
           <button id="newBtn">New</button>
@@ -66,19 +68,19 @@
 window.addEventListener("DOMContentLoaded", () => {
   const $ = (id) => document.getElementById(id);
 
-  // sanity: hard error if libs not loaded
+  // Hard sanity checks (no silent failures)
   if (typeof Chess === "undefined") { alert("chess.js not loaded (assets/chess.min.js)."); return; }
   if (typeof Chessboard === "undefined") { alert("chessboard.js not loaded (assets/chessboard-1.0.0.js)."); return; }
 
+  // Change your flag here
   const FLAG = "flag{queens_gambit_unlocked}";
-  const game = new Chess();
 
+  const game = new Chess();
   let board = null;
   let flipped = false;
   let unlocked = false;
 
-  // Precomputed “AI”: force QGD first, then random legal
-  // keyed by FEN when black to move
+  // Precomputed-ish Black: forces QGD early, then random legal
   const BOOK = new Map([
     // after 1.d4
     ["rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq - 0 1", "d5"],
@@ -89,6 +91,8 @@ window.addEventListener("DOMContentLoaded", () => {
   function randomBlackMove() {
     const moves = game.moves({ verbose: true });
     if (!moves.length) return null;
+
+    // Prefer captures, else random
     const captures = moves.filter(m => m.flags.includes("c") || m.flags.includes("e"));
     const pickFrom = captures.length ? captures : moves;
     return pickFrom[Math.floor(Math.random() * pickFrom.length)].san;
@@ -102,15 +106,17 @@ window.addEventListener("DOMContentLoaded", () => {
     syncUI();
   }
 
-  // structure-based gate (transposition friendly)
+  // Helpers to read board squares (for structure-based unlock)
   function at(square) {
     const b = game.board();
-    const file = square.charCodeAt(0) - 97;
-    const rank = Number(square[1]);
-    const row = 8 - rank;
+    const file = square.charCodeAt(0) - 97; // a=0
+    const rank = Number(square[1]);         // 1..8
+    const row = 8 - rank;                   // rank8 -> 0
     return b[row][file];
   }
 
+  // Transposition-friendly Queen’s Gambit structure:
+  // White: pawns d4 & c4, Black: pawns d5 & e6, White knight developed to c3 OR f3
   function isQueensGambitSetup() {
     const w_d4 = at("d4"), w_c4 = at("c4");
     const b_d5 = at("d5"), b_e6 = at("e6");
@@ -149,7 +155,7 @@ window.addEventListener("DOMContentLoaded", () => {
     if (unlocked) return false;
     if (game.game_over()) return false;
     if (game.turn() !== "w") return false;
-    if (piece.search(/^w/) === -1) return false;
+    if (!piece.startsWith("w")) return false; // only move white pieces
   }
 
   function onDrop (source, target) {
@@ -187,8 +193,8 @@ window.addEventListener("DOMContentLoaded", () => {
 
   $("undoBtn").addEventListener("click", () => {
     if (unlocked) return;
-    game.undo(); // black
-    game.undo(); // white
+    game.undo(); // undo black
+    game.undo(); // undo white
     syncUI();
   });
 
