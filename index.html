@@ -1,45 +1,212 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
+  <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Queen’s Gambit CTF</title>
 
-  <link rel="stylesheet" href="chessboardjs-1.0.0/css/chessboard-1.0.0.css">
+  <!-- chessboard.js (local, from your vendor folder) -->
+  <link rel="stylesheet" href="assets/vendor/chessboardjs-1.0.0/css/chessboard-1.0.0.css">
 
-  <script src="chessboardjs-1.0.0/js/chess.min.js"></script>
-  <script src="chessboardjs-1.0.0/js/chessboard-1.0.0.js"></script>
+  <!-- IMPORTANT: chess.js must load BEFORE chessboard.js -->
+  <script src="assets/vendor/chessboardjs-1.0.0/js/chess.min.js"></script>
+  <script src="assets/vendor/chessboardjs-1.0.0/js/chessboard-1.0.0.js"></script>
 
   <style>
-    body{margin:0;background:#0f141b;color:#e6edf3;font-family:system-ui;padding:24px}
-    #board{width:420px;max-width:100%}
+    body{margin:0;background:#0f141b;color:#e6edf3;font-family:system-ui,Segoe UI,Roboto,Arial}
+    .wrap{max-width:1100px;margin:24px auto;padding:0 16px;display:grid;grid-template-columns:520px 1fr;gap:16px}
+    @media(max-width:980px){.wrap{grid-template-columns:1fr}}
+    .card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.10);border-radius:16px;padding:14px}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+    button{cursor:pointer;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.07);color:#e6edf3;padding:9px 12px;font-size:13px}
+    .muted{color:#9aa7b2;font-size:13px}
+    .mono{font-family:ui-monospace,Consolas,Menlo,monospace;font-size:12px;white-space:pre-wrap;word-break:break-word}
+    #board{width:100%;max-width:520px}
+    .ok{display:none;margin-top:12px;padding:12px;border-radius:14px;border:1px solid rgba(71,209,140,.35);background:rgba(71,209,140,.10)}
   </style>
 </head>
+
 <body>
+  <div class="wrap">
+    <div class="card">
+      <div class="row" style="margin-bottom:10px;">
+        <div>
+          <div style="font-weight:800;">Queen’s Gambit CTF</div>
+          <div class="muted">Get the Queen’s Gambit structure to unlock the flag.</div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button id="newBtn">New</button>
+          <button id="flipBtn">Flip</button>
+          <button id="undoBtn">Undo</button>
+        </div>
+      </div>
 
-  <h1>Queen’s Gambit CTF</h1>
-  <div id="board"></div>
+      <div id="board"></div>
 
-  <script>
-    // If either of these alerts fires, a file path is wrong / 404
-    if (typeof Chess === "undefined") alert("Chess failed to load: check chessboardjs-1.0.0/js/chess.min.js");
-    if (typeof Chessboard === "undefined") alert("Chessboard failed to load: check chessboardjs-1.0.0/js/chessboard-1.0.0.js");
+      <div id="unlock" class="ok">
+        <div class="muted" style="margin-bottom:6px;">Unlocked</div>
+        <div id="flag" class="mono"></div>
+      </div>
+    </div>
 
-    const game = new Chess();
+    <div class="card">
+      <div class="muted">Moves (SAN)</div>
+      <div id="moves" class="mono" style="margin:6px 0 12px;">(none yet)</div>
 
-    const board = Chessboard('board', {
-      draggable: true,
-      position: 'start',
+      <div class="muted">FEN</div>
+      <div id="fen" class="mono" style="margin:6px 0 12px;"></div>
 
-      // IMPORTANT: point pieces into the chessboardjs folder (not /img at root)
-      pieceTheme: 'chessboardjs-1.0.0/img/chesspieces/wikipedia/{piece}.png',
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button id="copyFen">Copy FEN</button>
+      </div>
 
-      onDrop: (source, target) => {
-        const move = game.move({ from: source, to: target, promotion: 'q' });
-        if (move === null) return 'snapback';
-      }
-    });
-  </script>
+      <div class="muted" style="margin-top:12px;">
+        Hint: White pawns on d4 + c4, Black pawns on d5 + e6, then develop a white knight (c3 or f3).
+      </div>
+    </div>
+  </div>
 
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+
+  // Hard fail early if a path is wrong (no silent black screen)
+  if (typeof Chess === "undefined") {
+    alert("Chess failed to load. Check: assets/vendor/chessboardjs-1.0.0/js/chess.min.js");
+    return;
+  }
+  if (typeof Chessboard === "undefined") {
+    alert("Chessboard failed to load. Check: assets/vendor/chessboardjs-1.0.0/js/chessboard-1.0.0.js");
+    return;
+  }
+
+  const FLAG = "flag{queens_gambit_unlocked}";
+  const game = new Chess();
+
+  let board = null;
+  let flipped = false;
+  let unlocked = false;
+
+  // Small opening “AI” (book first, then random)
+  const BOOK = new Map([
+    ["rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq - 0 1", "d5"], // after 1.d4
+    ["rnbqkbnr/pppppppp/8/3p4/2PP4/8/PP2PPPP/RNBQKBNR b KQkq - 0 2", "e6"], // after 2.c4
+  ]);
+
+  function randomBlackMove() {
+    const moves = game.moves({ verbose: true });
+    if (!moves.length) return null;
+    const caps = moves.filter(m => m.flags.includes("c") || m.flags.includes("e"));
+    const pickFrom = caps.length ? caps : moves;
+    return pickFrom[Math.floor(Math.random() * pickFrom.length)].san;
+  }
+
+  function playBlack() {
+    if (unlocked) return;
+    if (game.turn() !== "b" || game.game_over()) return;
+    const mv = BOOK.get(game.fen()) || randomBlackMove();
+    if (mv) game.move(mv);
+    syncUI();
+  }
+
+  function at(square) {
+    const b = game.board();
+    const file = square.charCodeAt(0) - 97;
+    const rank = Number(square[1]);
+    const row = 8 - rank;
+    return b[row][file];
+  }
+
+  function isQueensGambitSetup() {
+    const w_d4 = at("d4"), w_c4 = at("c4");
+    const b_d5 = at("d5"), b_e6 = at("e6");
+    const n_c3 = at("c3"), n_f3 = at("f3");
+
+    const okPawns =
+      w_d4 && w_d4.color==="w" && w_d4.type==="p" &&
+      w_c4 && w_c4.color==="w" && w_c4.type==="p" &&
+      b_d5 && b_d5.color==="b" && b_d5.type==="p" &&
+      b_e6 && b_e6.color==="b" && b_e6.type==="p";
+
+    const okKnight =
+      (n_c3 && n_c3.color==="w" && n_c3.type==="n") ||
+      (n_f3 && n_f3.color==="w" && n_f3.type==="n");
+
+    return okPawns && okKnight;
+  }
+
+  function tryUnlock() {
+    if (unlocked) return;
+    if (isQueensGambitSetup()) {
+      unlocked = true;
+      $("flag").textContent = FLAG;
+      $("unlock").style.display = "block";
+    }
+  }
+
+  function syncUI() {
+    board.position(game.fen());
+    $("fen").textContent = game.fen();
+    $("moves").textContent = game.history().join(" ") || "(none yet)";
+    tryUnlock();
+  }
+
+  // chessboard.js will otherwise look for /img/... at site root — we point it to vendor folder
+  const PIECES =
+    "assets/vendor/chessboardjs-1.0.0/img/chesspieces/wikipedia/{piece}.png";
+
+  function onDragStart(source, piece) {
+    if (unlocked) return false;
+    if (game.game_over()) return false;
+    if (game.turn() !== "w") return false;
+    return piece.startsWith("w");
+  }
+
+  function onDrop(source, target) {
+    if (unlocked) return "snapback";
+    const move = game.move({ from: source, to: target, promotion: "q" });
+    if (move === null) return "snapback";
+    syncUI();
+    setTimeout(playBlack, 200);
+  }
+
+  function onSnapEnd() {
+    board.position(game.fen());
+  }
+
+  board = Chessboard("board", {
+    draggable: true,
+    position: "start",
+    orientation: "white",
+    pieceTheme: PIECES,
+    onDragStart,
+    onDrop,
+    onSnapEnd
+  });
+
+  $("newBtn").addEventListener("click", () => {
+    game.reset();
+    unlocked = false;
+    $("unlock").style.display = "none";
+    syncUI();
+  });
+
+  $("flipBtn").addEventListener("click", () => {
+    flipped = !flipped;
+    board.orientation(flipped ? "black" : "white");
+  });
+
+  $("undoBtn").addEventListener("click", () => {
+    if (unlocked) return;
+    game.undo(); // black
+    game.undo(); // white
+    syncUI();
+  });
+
+  $("copyFen").addEventListener("click", async () => navigator.clipboard.writeText(game.fen()));
+
+  syncUI();
+})();
+</script>
 </body>
 </html>
