@@ -1,37 +1,72 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="utf-8">
+
+  <!-- Page title (browser tab name) -->
   <title>Chess Board</title>
 
-  <link rel="stylesheet" href="./assets/vendor/chessboardjs-1.0.0/css/chessboard-1.0.0.min.css" />
+  <!-- Load chessboard.js CSS (styles for the board) -->
+  <link rel="stylesheet"
+        href="./assets/vendor/chessboardjs-1.0.0/css/chessboard-1.0.0.min.css">
+
+  <!-- Simple page styling -->
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    #board { width: 420px; }
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+
+    #board {
+      width: 420px;
+    }
   </style>
 </head>
+
 <body>
 
+  <!-- Visible title -->
   <h1>Chess Board</h1>
+
+  <!-- This div is WHERE the chessboard appears -->
   <div id="board"></div>
 
-  <!-- 1) jQuery FIRST -->
-  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-  <script>
-    // If this prints "undefined", jQuery did NOT load.
-    console.log("jQuery type:", typeof window.jQuery);
-    console.log("jQuery.fn exists:", !!(window.jQuery && window.jQuery.fn));
-  </script>
+  <!-- ================== JAVASCRIPT ================== -->
 
-  <!-- 2) chessboard SECOND -->
+  <!-- 1) jQuery (REQUIRED by chessboard.js) -->
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+  <!-- 2) chess.js (chess rules engine) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+
+  <!-- 3) chessboard.js (visual board) -->
   <script src="./assets/vendor/chessboardjs-1.0.0/js/chessboard-1.0.0.min.js"></script>
 
-  <!-- 3) init LAST -->
+  <!-- 4) Our code -->
   <script>
+    // Create a new chess game (this tracks rules & moves)
+    var game = new Chess();
+
+    // Create the chessboard on the page
     var board = Chessboard('board', {
-      position: 'start',
-      pieceTheme: './assets/vendor/chessboardjs-1.0.0/img/chesspieces/wikipedia/{piece}.png'
+      draggable: true,              // allow dragging pieces
+      position: 'start',             // starting position
+      pieceTheme:
+        './assets/vendor/chessboardjs-1.0.0/img/chesspieces/wikipedia/{piece}.png',
+
+      // This runs when a piece is dropped
+      onDrop: function (source, target) {
+
+        // Attempt the move
+        var move = game.move({
+          from: source,
+          to: target,
+          promotion: 'q' // always promote to queen
+        });
+
+        // If illegal move, snap piece back
+        if (move === null) return 'snapback';
+      }
     });
   </script>
 
