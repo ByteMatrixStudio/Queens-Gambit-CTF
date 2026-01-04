@@ -10,102 +10,82 @@
         href="./assets/vendor/chessboardjs-1.0.0/css/chessboard-1.0.0.min.css">
 
   <style>
-    /* Dark mode page + centered layout */
-    body {
-      margin: 0;
-      min-height: 100vh;
-      background: #0b0f14;
-      color: #e6edf3;
-      font-family: Arial, sans-serif;
-
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-
-      gap: 18px;
+    body{
+      margin:0; min-height:100vh;
+      background:#0b0f14; color:#e6edf3;
+      font-family:Arial,sans-serif;
+      display:flex; flex-direction:column;
+      align-items:center; justify-content:center;
+      gap:18px;
     }
 
-    h1 {
-      margin: 0;
-      font-size: 48px;
-      letter-spacing: 1px;
+    h1{ margin:0; font-size:48px; letter-spacing:1px; }
+
+    #board{ width:780px; max-width:92vw; }
+
+    .wrap{
+      padding:28px; border-radius:16px;
+      background:rgba(255,255,255,.04);
+      box-shadow:0 10px 30px rgba(0,0,0,.45);
+      width:fit-content;
     }
 
-    /* Bigger board */
-    #board {
-      width: 780px;      /* tweak: 720 / 900 etc */
-      max-width: 92vw;   /* responsive */
-    }
-
-    /* Card wrapper */
-    .wrap {
-      padding: 28px;
-      border-radius: 16px;
-      background: rgba(255, 255, 255, 0.04);
-      box-shadow: 0 10px 30px rgba(0,0,0,0.45);
-      width: fit-content;
-    }
-
-    #status {
-      margin-top: 14px;
-      font-size: 18px;
-      opacity: 0.95;
-      max-width: 780px;
-      line-height: 1.35;
+    #status{
+      margin-top:14px;
+      font-size:18px;
+      opacity:.95;
+      max-width:780px;
+      line-height:1.35;
     }
 
     /* Success screen */
-    #successScreen {
-      display: none;
-      padding: 28px;
-      border-radius: 16px;
-      background: rgba(255, 255, 255, 0.04);
-      box-shadow: 0 10px 30px rgba(0,0,0,0.45);
-      width: min(1000px, 92vw);
-      text-align: center;
-      opacity: 0;
-      transform: translateY(8px);
-      transition: opacity 250ms ease, transform 250ms ease;
+    #successScreen{
+      display:none;
+      padding:28px; border-radius:16px;
+      background:rgba(255,255,255,.04);
+      box-shadow:0 10px 30px rgba(0,0,0,.45);
+      width:min(1000px,92vw);
+      text-align:center;
+      opacity:0;
+      transform:translateY(8px);
+      transition:opacity 250ms ease, transform 250ms ease;
     }
-    #successScreen.show {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    #successScreen h2 {
-      margin: 0 0 10px 0;
-      font-size: 42px;
-      letter-spacing: 1px;
+    #successScreen.show{
+      opacity:1;
+      transform:translateY(0);
     }
 
-    #successScreen p {
-      margin: 0 0 18px 0;
-      opacity: 0.9;
-      font-size: 18px;
+    #successScreen h2{
+      margin:0 0 10px 0;
+      font-size:42px;
+      letter-spacing:1px;
     }
 
-    #flagImage {
-      width: 100%;
-      max-width: 920px;
-      border-radius: 14px;
-      border: 1px solid rgba(255,255,255,0.12);
-      box-shadow: 0 12px 40px rgba(0,0,0,0.55);
+    #successScreen p{
+      margin:0 0 18px 0;
+      opacity:.9;
+      font-size:18px;
     }
 
-    #restartBtn {
-      margin-top: 18px;
-      padding: 10px 14px;
-      border-radius: 10px;
-      border: 1px solid rgba(255,255,255,0.18);
-      background: rgba(255,255,255,0.06);
-      color: #e6edf3;
-      cursor: pointer;
-      font-size: 16px;
+    #flagImage{
+      width:100%;
+      max-width:920px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.12);
+      box-shadow:0 12px 40px rgba(0,0,0,.55);
     }
-    #restartBtn:hover {
-      background: rgba(255,255,255,0.10);
+
+    #restartBtn{
+      margin-top:18px;
+      padding:10px 14px;
+      border-radius:10px;
+      border:1px solid rgba(255,255,255,.18);
+      background:rgba(255,255,255,.06);
+      color:#e6edf3;
+      cursor:pointer;
+      font-size:16px;
     }
+    #restartBtn:hover{ background:rgba(255,255,255,.10); }
   </style>
 </head>
 
@@ -118,144 +98,124 @@
     <div id="status"></div>
   </div>
 
-  <!-- Success screen (shows image with the flag) -->
+  <!-- Success screen -->
   <div id="successScreen">
     <h2>Well played.</h2>
     <p>You found the idea hiding in plain sight.</p>
 
-    <!-- Put your image here (store it in your repo) -->
-    <!-- Example: ./assets/flag.png -->
+    <!-- Put your image here -->
     <img id="flagImage" src="./assets/flag.png" alt="Flag">
 
-    <div>
-      <button id="restartBtn" type="button">Restart</button>
-    </div>
+    <div><button id="restartBtn" type="button">Restart</button></div>
   </div>
 
-  <!-- ================== SCRIPTS (ORDER MATTERS) ================== -->
-
-  <!-- 1) jQuery (required by chessboard.js) -->
+  <!-- Scripts (ORDER MATTERS) -->
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-
-  <!-- 2) chess.js (rules engine) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
-
-  <!-- 3) chessboard.js (visual board + dragging) -->
   <script src="./assets/vendor/chessboardjs-1.0.0/js/chessboard-1.0.0.min.js"></script>
 
-  <!-- 4) CTF logic -->
   <script>
-    // =========================
-    // CTF SETTINGS
-    // =========================
-
-    // Enforced opening (hidden):
-    // White must play these exact moves; Black replies automatically.
+    // ============================================================
+    // SCRIPTED LINE (BOTH SIDES) until White Queen reaches e5
+    // ============================================================
     // UCI format: "e2e4", "g1f3", etc.
-    const OPENING = [
+    //
+    // This line is legal and avoids the "turn brick" problem because
+    // black always replies, and we never leave it on black-to-move.
+    //
+    // Last required White move is: Qe5 (encoded as "e4e5")
+    const LINE = [
       { w: "d2d4", b: "d7d5" }, // 1. d4 d5
-      { w: "c2c4", b: "e7e6" }, // 2. c4 e6 (Queen's Gambit Declined)
-      { w: "b1c3", b: "g8f6" }  // 3. Nc3 Nf6
+      { w: "c2c4", b: "e7e6" }, // 2. c4 e6
+      { w: "b1c3", b: "g8f6" }, // 3. Nc3 Nf6
+      { w: "g1f3", b: "f8e7" }, // 4. Nf3 Be7
+      { w: "e2e3", b: "e8g8" }, // 5. e3 O-O
+      { w: "f1e2", b: "f6h5" }, // 6. Be2 Nh5
+      { w: "e1g1", b: "c7c5" }, // 7. O-O c5
+      { w: "d1c2", b: "b8c6" }, // 8. Qc2 Nc6
+      { w: "c2e4", b: "a7a6" }, // 9. Qe4 a6
+      { w: "e4e5", b: "b7b6" }  // 10. Qe5 b6  <-- TRIGGER HERE
     ];
 
-    // Intermediate win condition:
-    // After the opening is completed, if White's Queen lands on this square => success screen.
+    // Win condition: white queen is on e5 (after last move)
     const QUEEN_TARGET_SQUARE = "e5";
 
-    // Image path shown on success screen (you provide this file)
-    const FLAG_IMAGE_PATH = "./assets/flag.png";
-
-    // =========================
-    // HINT TEXT (vague nudges)
-    // =========================
-
-    // Hints during the enforced opening (no exact squares, no exact moves)
-    const OPENING_HINTS = [
+    // Vague hint per step (no explicit moves)
+    const HINTS = [
       "The center is the heart of the board. Start there.",
-      "A classic pawn offer can steer the game into familiar waters…",
-      "Develop a knight. Keep it principled."
+      "A familiar pawn offer can steer the game into classic territory…",
+      "Develop a knight. Nothing fancy yet.",
+      "Bring another piece out. Keep it principled.",
+      "Open a lane without overcommitting.",
+      "A quiet bishop move. Keep options.",
+      "King safety matters. Don’t be greedy.",
+      "A queen reposition — not an attack yet.",
+      "A central queen step. Calm, not flashy.",
+      "One more queen step. A clean landing."
     ];
 
-    // After opening is complete
-    const POST_OPENING_HINTS = [
-      "Now the puzzle begins. Look for a bold royal visit.",
-      "Not checkmate — something quieter. A queen’s landing spot matters.",
-      "The answer isn’t on the edge of the board."
-    ];
-
-    const WRONG_MOVE_HINTS = [
+    const WRONG_HINTS = [
       "That doesn’t fit the theme. Think classical.",
-      "Close… but the idea is more central.",
-      "Not quite. Try a more principled continuation.",
-      "The position wants something more familiar."
+      "Close, but the idea is more principled.",
+      "Not quite. Try something more central.",
+      "The plan is simpler than it looks."
     ];
 
-    // =========================
-    // SETUP
-    // =========================
-
+    // ============================================================
+    // DOM / UI
+    // ============================================================
     const gameScreen = document.getElementById("gameScreen");
     const successScreen = document.getElementById("successScreen");
     const restartBtn = document.getElementById("restartBtn");
     const statusEl = document.getElementById("status");
-    const flagImage = document.getElementById("flagImage");
 
-    flagImage.src = FLAG_IMAGE_PATH;
+    function setStatus(msg){ statusEl.textContent = msg; }
 
-    function setStatus(msg) {
-      statusEl.textContent = msg;
-    }
-
-    function showSuccessScreen() {
+    function showSuccessScreen(){
       gameScreen.style.display = "none";
       successScreen.style.display = "block";
-      // trigger transition
       requestAnimationFrame(() => successScreen.classList.add("show"));
     }
 
-    function toUCI(from, to) {
-      return from + to;
-    }
-
-    function isWhiteQueenOn(square) {
-      const sq = game.get(square); // {type:'q', color:'w'} or null
-      return !!sq && sq.color === "w" && sq.type === "q";
-    }
-
-    function wrongHint(i) {
-      return WRONG_MOVE_HINTS[i % WRONG_MOVE_HINTS.length];
-    }
-
-    // -------------------------
-    // GAME STATE
-    // -------------------------
-    var game, board;
-    var openingStep = 0;
-    var openingCompleted = false;
-
-    function updateHints() {
-      if (!openingCompleted) {
-        setStatus("White to move. " + (OPENING_HINTS[openingStep] || "Keep it classical."));
-      } else {
-        // rotate post-opening hints a bit
-        const idx = Math.min(
-          POST_OPENING_HINTS.length - 1,
-          Math.floor(Math.random() * POST_OPENING_HINTS.length)
-        );
-        setStatus(POST_OPENING_HINTS[idx]);
-      }
-    }
-
-    function resetScreens() {
+    function resetScreens(){
       successScreen.classList.remove("show");
       successScreen.style.display = "none";
       gameScreen.style.display = "block";
     }
 
-    function newGame() {
+    // ============================================================
+    // Chess helpers
+    // ============================================================
+    function uciToMoveObj(uci){
+      return { from: uci.slice(0,2), to: uci.slice(2,4), promotion: "q" };
+    }
+
+    function isWhiteQueenOn(square){
+      const sq = game.get(square);
+      return !!sq && sq.color === "w" && sq.type === "q";
+    }
+
+    function wrongHint(i){
+      return WRONG_HINTS[i % WRONG_HINTS.length];
+    }
+
+    // ============================================================
+    // GAME STATE
+    // ============================================================
+    var game, board;
+    var step = 0;
+
+    function syncBoard(){
+      board.position(game.fen());
+    }
+
+    function updateHint(){
+      setStatus("White to move. " + (HINTS[step] || "Continue the idea…"));
+    }
+
+    function newGame(){
       game = new Chess();
-      openingStep = 0;
-      openingCompleted = false;
+      step = 0;
 
       resetScreens();
 
@@ -267,113 +227,75 @@
           position: "start",
           pieceTheme: "./assets/vendor/chessboardjs-1.0.0/img/chesspieces/wikipedia/{piece}.png",
 
-          onDragStart: function (source, piece) {
-            // only allow white pieces
+          onDragStart: function(source, piece){
+            // Only white pieces
             if (piece.startsWith("b")) return false;
 
-            // prevent dragging during black auto-move
+            // Only allow on white's turn
             if (game.turn() !== "w") return false;
 
-            // block if solved
+            // Block if solved
             if (successScreen.style.display === "block") return false;
           },
 
-          onDrop: function (source, target) {
+          onDrop: function(source, target){
             if (source === target) return "snapback";
-            const uci = toUCI(source, target);
 
-            // =========================
-            // PHASE 1: Enforced opening
-            // =========================
-            if (!openingCompleted) {
-              const expected = OPENING[openingStep]?.w;
-
-              // no more steps means opening is complete (shouldn't happen normally)
-              if (!expected) {
-                openingCompleted = true;
-                updateHints();
-                return;
-              }
-
-              // must match exact opening move, but we never reveal which move it was
-              if (uci !== expected) {
-                setStatus(wrongHint(openingStep));
-                return "snapback";
-              }
-
-              // Apply White move
-              const wMove = game.move({
-                from: uci.slice(0, 2),
-                to: uci.slice(2, 4),
-                promotion: "q"
-              });
-
-              if (wMove === null) {
-                setStatus("Illegal move.");
-                return "snapback";
-              }
-              board.position(game.fen());
-
-              // Apply Black reply
-              const bUci = OPENING[openingStep].b;
-              const bMove = game.move({
-                from: bUci.slice(0, 2),
-                to: bUci.slice(2, 4),
-                promotion: "q"
-              });
-
-              if (bMove === null) {
-                setStatus("The opponent hesitates… (script error)");
-                return;
-              }
-
-              openingStep++;
-              board.position(game.fen());
-
-              if (openingStep >= OPENING.length) {
-                openingCompleted = true;
-              }
-
-              updateHints();
-              return;
-            }
-
-            // =========================
-            // PHASE 2: Free play + queen target
-            // =========================
-
-            const move = game.move({
-              from: source,
-              to: target,
-              promotion: "q"
-            });
-
-            // illegal move → snap back cleanly (prevents desync/bricking)
-            if (move === null) {
-              setStatus("That move isn’t legal.");
+            const expected = LINE[step]?.w;
+            if (!expected) {
+              // Line is over; nothing else to do
+              setStatus("The board is quiet.");
               return "snapback";
             }
 
-            // sync the visual board with chess.js
-            board.position(game.fen());
+            const uci = source + target;
 
-            // success condition: white queen reaches target square
+            // Enforce exact white move for this step, but don't reveal which
+            if (uci !== expected) {
+              setStatus(wrongHint(step));
+              return "snapback";
+            }
+
+            // Apply white move
+            const wMove = game.move(uciToMoveObj(uci));
+            if (wMove === null) {
+              setStatus("That move isn’t legal.");
+              return "snapback";
+            }
+            syncBoard();
+
+            // Check win after white move
             if (isWhiteQueenOn(QUEEN_TARGET_SQUARE)) {
               showSuccessScreen();
               return;
             }
 
-            updateHints();
+            // Apply black reply
+            const bUci = LINE[step].b;
+            const bMove = game.move(uciToMoveObj(bUci));
+            if (bMove === null) {
+              setStatus("Black reply failed (script error).");
+              return;
+            }
+
+            step++;
+            syncBoard();
+
+            // (Optional) win check after black, harmless
+            if (isWhiteQueenOn(QUEEN_TARGET_SQUARE)) {
+              showSuccessScreen();
+              return;
+            }
+
+            updateHint();
           }
         });
       }
 
-      updateHints();
+      updateHint();
     }
 
     restartBtn.addEventListener("click", newGame);
-
-    // Start
     newGame();
   </script>
 </body>
