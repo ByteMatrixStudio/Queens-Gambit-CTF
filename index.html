@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Queens Gambit CTF</title>
 
-  <!-- chessboard.js CSS -->
   <link rel="stylesheet"
         href="./assets/vendor/chessboardjs-1.0.0/css/chessboard-1.0.0.min.css">
 
@@ -38,7 +37,6 @@
       line-height:1.35;
     }
 
-    /* Success screen */
     #successScreen{
       display:none;
       padding:28px; border-radius:16px;
@@ -67,14 +65,6 @@
       font-size:18px;
     }
 
-    #flagImage{
-      width:100%;
-      max-width:920px;
-      border-radius:14px;
-      border:1px solid rgba(255,255,255,.12);
-      box-shadow:0 12px 40px rgba(0,0,0,.55);
-    }
-
     #restartBtn{
       margin-top:18px;
       padding:10px 14px;
@@ -91,54 +81,40 @@
 
 <body>
 
-  <!-- Game screen -->
   <div class="wrap" id="gameScreen">
     <h1>Chess Board</h1>
     <div id="board"></div>
     <div id="status"></div>
   </div>
 
- <div id="successScreen">
-  <h2>Well played.</h2>
-  <p>You found the idea hiding in plain sight.</p>
-
-  <div>
-    <button id="restartBtn" type="button">Restart</button>
+  <div id="successScreen">
+    <h2>Well played.</h2>
+    <p>You found the idea hiding in plain sight.</p>
+    <div>
+      <button id="restartBtn" type="button">Restart</button>
+    </div>
   </div>
-</div>
 
-  <!-- Scripts (ORDER MATTERS) -->
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
   <script src="./assets/vendor/chessboardjs-1.0.0/js/chessboard-1.0.0.min.js"></script>
 
   <script>
-    // ============================================================
-    // SCRIPTED LINE (BOTH SIDES) until White Queen reaches e5
-    // ============================================================
-    // UCI format: "e2e4", "g1f3", etc.
-    //
-    // This line is legal and avoids the "turn brick" problem because
-    // black always replies, and we never leave it on black-to-move.
-    //
-    // Last required White move is: Qe5 (encoded as "e4e5")
     const LINE = [
-      { w: "d2d4", b: "d7d5" }, // 1. d4 d5
-      { w: "c2c4", b: "e7e6" }, // 2. c4 e6
-      { w: "b1c3", b: "g8f6" }, // 3. Nc3 Nf6
-      { w: "g1f3", b: "f8e7" }, // 4. Nf3 Be7
-      { w: "e2e3", b: "e8g8" }, // 5. e3 O-O
-      { w: "f1e2", b: "f6h5" }, // 6. Be2 Nh5
-      { w: "e1g1", b: "c7c5" }, // 7. O-O c5
-      { w: "d1c2", b: "b8c6" }, // 8. Qc2 Nc6
-      { w: "c2e4", b: "a7a6" }, // 9. Qe4 a6
-      { w: "e4e5", b: "b7b6" }  // 10. Qe5 b6  <-- TRIGGER HERE
+      { w: "d2d4", b: "d7d5" },
+      { w: "c2c4", b: "e7e6" },
+      { w: "b1c3", b: "g8f6" },
+      { w: "g1f3", b: "f8e7" },
+      { w: "e2e3", b: "e8g8" },
+      { w: "f1e2", b: "f6h5" },
+      { w: "e1g1", b: "c7c5" },
+      { w: "d1c2", b: "b8c6" },
+      { w: "c2e4", b: "a7a6" },
+      { w: "e4e5", b: "b7b6" }
     ];
 
-    // Win condition: white queen is on e5 (after last move)
     const QUEEN_TARGET_SQUARE = "e5";
 
-    // Vague hint per step (no explicit moves)
     const HINTS = [
       "The center is the heart of the board. Start there.",
       "A familiar pawn offer can steer the game into classic territory…",
@@ -159,9 +135,6 @@
       "The plan is simpler than it looks."
     ];
 
-    // ============================================================
-    // DOM / UI
-    // ============================================================
     const gameScreen = document.getElementById("gameScreen");
     const successScreen = document.getElementById("successScreen");
     const restartBtn = document.getElementById("restartBtn");
@@ -181,9 +154,6 @@
       gameScreen.style.display = "block";
     }
 
-    // ============================================================
-    // Chess helpers
-    // ============================================================
     function uciToMoveObj(uci){
       return { from: uci.slice(0,2), to: uci.slice(2,4), promotion: "q" };
     }
@@ -197,9 +167,6 @@
       return WRONG_HINTS[i % WRONG_HINTS.length];
     }
 
-    // ============================================================
-    // GAME STATE
-    // ============================================================
     var game, board;
     var step = 0;
 
@@ -226,13 +193,8 @@
           pieceTheme: "./assets/vendor/chessboardjs-1.0.0/img/chesspieces/wikipedia/{piece}.png",
 
           onDragStart: function(source, piece){
-            // Only white pieces
             if (piece.startsWith("b")) return false;
-
-            // Only allow on white's turn
             if (game.turn() !== "w") return false;
-
-            // Block if solved
             if (successScreen.style.display === "block") return false;
           },
 
@@ -241,20 +203,17 @@
 
             const expected = LINE[step]?.w;
             if (!expected) {
-              // Line is over; nothing else to do
               setStatus("The board is quiet.");
               return "snapback";
             }
 
             const uci = source + target;
 
-            // Enforce exact white move for this step, but don't reveal which
             if (uci !== expected) {
               setStatus(wrongHint(step));
               return "snapback";
             }
 
-            // Apply white move
             const wMove = game.move(uciToMoveObj(uci));
             if (wMove === null) {
               setStatus("That move isn’t legal.");
@@ -262,24 +221,21 @@
             }
             syncBoard();
 
-            // Check win after white move
             if (isWhiteQueenOn(QUEEN_TARGET_SQUARE)) {
               showSuccessScreen();
               return;
             }
 
-            // Apply black reply
             const bUci = LINE[step].b;
             const bMove = game.move(uciToMoveObj(bUci));
             if (bMove === null) {
-              setStatus("Black reply failed (script error).");
+              setStatus("Black reply failed.");
               return;
             }
 
             step++;
             syncBoard();
 
-            // (Optional) win check after black, harmless
             if (isWhiteQueenOn(QUEEN_TARGET_SQUARE)) {
               showSuccessScreen();
               return;
