@@ -95,7 +95,7 @@
   <div id="successScreen">
     <h2>Well played.</h2>
     <p>You found the idea hiding in plain sight.</p>
-    <p>flag{why would you make me play chess?!}</p>
+    <p id="flagLine"></p>
     <div>
       <button id="restartBtn" type="button">Restart</button>
     </div>
@@ -106,60 +106,84 @@
   <script src="./assets/vendor/chessboardjs-1.0.0/js/chessboard-1.0.0.min.js"></script>
 
   <script>
-    const LINE = [
-      { w: "d2d4", b: "d7d5" },
-      { w: "c2c4", b: "e7e6" },
-      { w: "b1c3", b: "g8f6" },
-      { w: "g1f3", b: "f8e7" },
-      { w: "e2e3", b: "e8g8" },
-      { w: "f1e2", b: "f6h5" },
-      { w: "e1g1", b: "c7c5" },
-      { w: "d1c2", b: "b8c6" },
-      { w: "c2e4", b: "a7a6" },
-      { w: "e4e5", b: "b7b6" }
-    ];
+    const LINE=(function(){
+      const _A=[[[128,171,15,234],[159,81,76,49]],[[172,200,44,73],[181,50,105,145]],[[117,83,105,208],[111,165,4,134]],[[177,220,72,56],[158,187,191,35]],[[175,39,220,204],[10,102,55,97]],[[94,156,188,185],[111,171,190,219]],[[77,178,222,171],[53,95,67,242]],[[191,216,30,190],[126,84,70,52]],[[16,17,127,14],[206,207,128,25]],[[36,105,151,106],[60,149,211,179]]];
+      const _x=s=>{s|=0;s^=s<<13;s^=s>>>17;s^=s<<5;return s>>>0};
+      const _seed=(i,t)=>((0x00C0FFEE^(((i+1)*0x9E3779B9)>>>0)^(t?0xA5A5A5A5:0x5A5A5A5A))>>>0);
+      const _d=(arr,seed)=>{let s=seed>>>0,o="";for(let i=0;i<arr.length;i++){s=_x(s);o+=String.fromCharCode((arr[i]^(s&255))&255)}return o};
+      return _A.map((p,i)=>({
+        get w(){return _d(p[0],_seed(i,1))},
+        get b(){return _d(p[1],_seed(i,0))}
+      }));
+    })();
 
-    const QUEEN_TARGET_SQUARE = "e5";
+    const QUEEN_TARGET_SQUARE=(function(){
+      const _x=s=>{s|=0;s^=s<<13;s^=s>>>17;s^=s<<5;return s>>>0};
+      const _d=(arr,seed)=>{let s=seed>>>0,o="";for(let i=0;i<arr.length;i++){s=_x(s);o+=String.fromCharCode((arr[i]^(s&255))&255)}return o};
+      return _d([222,67],0x0BADF00D);
+    })();
 
-    const HINTS = [
-      "The center is the heart of the board. Start there.",
-      "A familiar pawn offer can steer the game into classic territory…",
-      "Develop a knight. Nothing fancy yet.",
-      "Bring another piece out. Keep it principled.",
-      "Open a lane without overcommitting.",
-      "A quiet bishop move. Keep options.",
-      "King safety matters. Don’t be greedy.",
-      "A queen reposition — not an attack yet.",
-      "A central queen step. Calm, not flashy.",
-      "One more queen step. A clean landing."
-    ];
+    const HINTS=(function(){
+      const _H=[
+        [220,179,199,118,250,96,129,30,1,214,186,84,226,196,28,111,225,29,116,32,119,189,166,168,197,43,61,94,44,19,70,229,4,35,44,61,82,49,105,101,29,57,167,252,214,195,125,147,62,15],
+        [201,166,243,116,236,49,196,22,76,203,171,80,237,212,0,109,237,85,116,45,116,230,183,184,139,52,43,80,101,29,82,166,92,59,114,41,71,59,102,112,29,35,246,184,211,201,57,212,44,65,7,149,201,10,59,87,114,116,34,146,177,223,137,232,193,47,49,25],
+        [216,191,218,102,245,45,196,30,79,214,186,69,176,221,31,45,232,1,104,48,34,189,166,234,205,99,56,29,36,78,92,252,91,34,52,56],
+        [222,188,204,102,242,45,196,30,79,214,190,90,237,197,28,111,235,83,112,40,55,189,163,169,156,42,47,84,110,85,86,238,10,35,44,57,71,51,115,113,21,38,163,178],
+        [203,160,199,118,250,96,129,30,11,202,188,86,224,193,11,41,233,83,120,61,116,236,182,173,143,99,43,92,112,25,88,243,30,50,98,38],
+        [202,183,218,102,245,45,196,30,76,203,171,75,224,197,0,109,229,29,120,60,32,235,170,184,205,36,56,29,36,70,69,242,26,34,63,58,82,49,105,101,31],
+        [209,169,245,112,236,49,196,22,70,200,171,75,237,220,10,109,229,29,116,61,118,189,166,170,141,42,43,93,44,83,80,241,91,63,98,59,71,45,116,104],
+        [216,191,218,102,245,45,196,30,72,203,171,75,224,197,0,109,237,85,116,45,116,230,187,186,141,46,61,95,44,86,82,238,0,35,44,61,82,49,105,101,29,57,167,252,214],
+        [216,191,218,102,245,45,196,30,77,214,186,90,237,197,28,111,225,29,116,40,52,189,166,170,197,36,43,80,101,23,92,245,30,50,114,41,71,59,102,112,29,35,246,184,211,201,57,212,44,65],
+        [209,169,245,112,236,49,196,22,75,203,171,75,224,197,0,109,237,85,116,45,116,230,187,186,141,46,61,95,44,84,70,229,4,35,44,61,82,49,105,101,31,57,167,252,214,195,125,147,62,15]
+      ];
+      const _S=[
+        0x11111111,0x2468CDF0,0x37C069CF,0x4B17E5AE,0x5E6F618D,0x71C6DD6C,0x851E594B,0x9875D52A,0xABCD5109,0xBF24CCE8
+      ];
+      const _x=s=>{s|=0;s^=s<<13;s^=s>>>17;s^=s<<5;return s>>>0};
+      const _d=(arr,seed)=>{let s=seed>>>0,o="";for(let i=0;i<arr.length;i++){s=_x(s);o+=String.fromCharCode((arr[i]^(s&255))&255)}return o};
+      return new Proxy(_H,{get(t,p){if(p==="length")return t.length;const i=+p;return Number.isInteger(i)&&i>=0&&i<t.length?_d(t[i],_S[i]):undefined}});
+    })();
 
-    const WRONG_HINTS = [
-      "That doesn’t fit the theme. Think classical.",
-      "Close, but the idea is more principled.",
-      "Not quite. Try something more central.",
-      "The plan is simpler than it looks."
-    ];
+    const WRONG_HINTS=(function(){
+      const _W=[
+        [207,167,243,116,236,49,196,22,76,203,171,75,237,197,28,111,225,29,116,45,116,230,187,186,141,46,61,95,44,19,70,229,4,35,44,57,71,51,115,113,21,38,163,178,144],
+        [219,191,218,102,245,45,196,30,77,214,186,90,237,197,28,111,225,29,116,40,52,189,166,170,197,36,43,80,101,23,92,245,30,50,114,41,71,59,102,112,29,35,246],
+        [222,188,204,102,242,45,196,30,79,214,186,90,237,197,28,111,225,29,116,40,52,189,166,170,197,43,61,94,44,83,80,241,91,63,98,59,71,45,116,104,31],
+        [209,169,245,112,236,49,196,22,75,203,171,75,224,197,0,109,229,29,120,60,32,235,170,184,205,36,56,29,36,70,69,242,26,34,63,58,82,49,105,101,31,57,167,252,214,195,125,147,62,15]
+      ];
+      const _S=[0x22222222,0x2468ACE0,0x26AF37BE,0x28F5C29C];
+      const _x=s=>{s|=0;s^=s<<13;s^=s>>>17;s^=s<<5;return s>>>0};
+      const _d=(arr,seed)=>{let s=seed>>>0,o="";for(let i=0;i<arr.length;i++){s=_x(s);o+=String.fromCharCode((arr[i]^(s&255))&255)}return o};
+      return new Proxy(_W,{get(t,p){if(p==="length")return t.length;const i=+p;return Number.isInteger(i)&&i>=0&&i<t.length?_d(t[i],_S[i]):undefined}});
+    })();
 
-    const gameScreen = document.getElementById("gameScreen");
-    const successScreen = document.getElementById("successScreen");
-    const restartBtn = document.getElementById("restartBtn");
-    const statusEl = document.getElementById("status");
+    const gameScreen=document.getElementById("gameScreen");
+    const successScreen=document.getElementById("successScreen");
+    const restartBtn=document.getElementById("restartBtn");
+    const statusEl=document.getElementById("status");
+    const flagLine=document.getElementById("flagLine");
 
     function setStatus(msg){
-      statusEl.textContent = msg;
+      statusEl.textContent=msg;
     }
 
     function showSuccessScreen(){
-      gameScreen.style.display = "none";
-      successScreen.style.display = "block";
+      (function(){
+        const _F=[209,46,57,92,51,108,52,202,214,194,85,145,191,119,32,16,35,238,24,234,244,198,192,53,36,37,47,215,67,166,137,240,52,158,183,14,235,211,190,123];
+        const _x=s=>{s|=0;s^=s<<13;s^=s>>>17;s^=s<<5;return s>>>0};
+        const _d=(arr,seed)=>{let s=seed>>>0,o="";for(let i=0;i<arr.length;i++){s=_x(s);o+=String.fromCharCode((arr[i]^(s&255))&255)}return o};
+        flagLine.textContent=_d(_F,0xDEADBEEF);
+      })();
+      gameScreen.style.display="none";
+      successScreen.style.display="block";
       requestAnimationFrame(() => successScreen.classList.add("show"));
     }
 
     function resetScreens(){
       successScreen.classList.remove("show");
-      successScreen.style.display = "none";
-      gameScreen.style.display = "block";
+      successScreen.style.display="none";
+      gameScreen.style.display="block";
+      flagLine.textContent="";
     }
 
     function uciToMoveObj(uci){
@@ -183,7 +207,19 @@
     }
 
     function updateHint(){
-      setStatus("White to move. " + (HINTS[step] || "Continue the idea…"));
+      (function(){
+        const _M={
+          p:[238,103,99,245,18,161,193,131,76,171,32,210,27,58],
+          c:[219,170,217,118,245,45,196,30,79,214,186,90,237,197,28,111,225,29],
+          s1:0x33333333,
+          s2:0x34353637
+        };
+        const _x=s=>{s|=0;s^=s<<13;s^=s>>>17;s^=s<<5;return s>>>0};
+        const _d=(arr,seed)=>{let s=seed>>>0,o="";for(let i=0;i<arr.length;i++){s=_x(s);o+=String.fromCharCode((arr[i]^(s&255))&255)}return o};
+        const a=_d(_M.p,_M.s1);
+        const b=HINTS[step] || _d(_M.c,_M.s2);
+        setStatus(a + b);
+      })();
     }
 
     function newGame(){
@@ -208,7 +244,12 @@
 
             const expected = LINE[step]?.w;
             if (!expected) {
-              setStatus("The board is quiet.");
+              (function(){
+                const _m=[238,103,99,245,18,161,193,131,76,171,32,210,27,58,250,233,153,197];
+                const _x=s=>{s|=0;s^=s<<13;s^=s>>>17;s^=s<<5;return s>>>0};
+                const _d=(arr,seed)=>{let s=seed>>>0,o="";for(let i=0;i<arr.length;i++){s=_x(s);o+=String.fromCharCode((arr[i]^(s&255))&255)}return o};
+                setStatus(_d(_m,0x35363738));
+              })();
               return "snapback";
             }
 
@@ -220,7 +261,12 @@
 
             const wMove = game.move(uciToMoveObj(uci));
             if (wMove === null) {
-              setStatus("That move isn’t legal.");
+              (function(){
+                const _m=[219,170,217,118,245,45,196,30,79,214,186,90,237,197,28,111,225,29,116,40,52,189];
+                const _x=s=>{s|=0;s^=s<<13;s^=s>>>17;s^=s<<5;return s>>>0};
+                const _d=(arr,seed)=>{let s=seed>>>0,o="";for(let i=0;i<arr.length;i++){s=_x(s);o+=String.fromCharCode((arr[i]^(s&255))&255)}return o};
+                setStatus(_d(_m,0x36373839));
+              })();
               return "snapback";
             }
 
@@ -234,7 +280,12 @@
             const bUci = LINE[step].b;
             const bMove = game.move(uciToMoveObj(bUci));
             if (bMove === null) {
-              setStatus("Black reply failed.");
+              (function(){
+                const _m=[207,167,243,116,236,49,196,22,76,203,171,75,237,197,0,109,229,29,120,60];
+                const _x=s=>{s|=0;s^=s<<13;s^=s>>>17;s^=s<<5;return s>>>0};
+                const _d=(arr,seed)=>{let s=seed>>>0,o="";for(let i=0;i<arr.length;i++){s=_x(s);o+=String.fromCharCode((arr[i]^(s&255))&255)}return o};
+                setStatus(_d(_m,0x3738393A));
+              })();
               return;
             }
 
