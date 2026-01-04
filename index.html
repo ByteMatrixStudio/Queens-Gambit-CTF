@@ -44,39 +44,89 @@
       border-radius: 16px;
       background: rgba(255, 255, 255, 0.04);
       box-shadow: 0 10px 30px rgba(0,0,0,0.45);
+      width: fit-content;
     }
 
     #status {
       margin-top: 14px;
       font-size: 18px;
-      opacity: 0.9;
+      opacity: 0.95;
+      max-width: 720px;
+      line-height: 1.35;
     }
 
-    #flag {
-      margin-top: 14px;
-      padding: 12px 16px;
-      border-radius: 12px;
-      background: rgba(0, 255, 140, 0.12);
-      border: 1px solid rgba(0, 255, 140, 0.35);
-      font-family: monospace;
-      font-size: 18px;
+    /* Success / flag screen */
+    #successScreen {
       display: none;
-      white-space: pre-wrap;
-      word-break: break-word;
+      padding: 28px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.04);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.45);
+      width: min(900px, 92vw);
+      text-align: center;
+    }
+
+    #successScreen h2 {
+      margin: 0 0 10px 0;
+      font-size: 42px;
+      letter-spacing: 1px;
+    }
+
+    #successScreen p {
+      margin: 0 0 18px 0;
+      opacity: 0.9;
+      font-size: 18px;
+    }
+
+    #flagImage {
+      width: 100%;
+      max-width: 820px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.12);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.55);
+    }
+
+    #restartBtn {
+      margin-top: 18px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(255,255,255,0.06);
+      color: #e6edf3;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    #restartBtn:hover {
+      background: rgba(255,255,255,0.10);
     }
   </style>
 </head>
 
 <body>
-  <div class="wrap">
+
+  <!-- Main game screen -->
+  <div class="wrap" id="gameScreen">
     <h1>Chess Board</h1>
 
     <!-- The board renders inside this div -->
     <div id="board"></div>
 
-    <!-- Status + flag output -->
+    <!-- Hint/status output -->
     <div id="status"></div>
-    <div id="flag"></div>
+  </div>
+
+  <!-- Success screen (shows an image with the flag) -->
+  <div id="successScreen">
+    <h2>Well played.</h2>
+    <p>The position feels… familiar. Claim your reward.</p>
+
+    <!-- Put your image here (recommended: store locally in repo) -->
+    <!-- Example path: ./assets/flag.png -->
+    <img id="flagImage" src="./assets/flag.png" alt="Flag">
+
+    <div>
+      <button id="restartBtn" type="button">Restart</button>
+    </div>
   </div>
 
   <!-- ================== SCRIPTS (ORDER MATTERS) ================== -->
@@ -101,7 +151,7 @@
     // Use UCI like "d2d4", "g1f3", etc.
     const SCRIPT = [
       { w: "d2d4", b: "d7d5" }, // 1. d4 d5
-      { w: "c2c4", b: "e7e6" }, // 2. c4 e6 (Queen's Gambit Declined)
+      { w: "c2c4", b: "e7e6" }, // 2. c4 e6 (QGD)
       { w: "b1c3", b: "g8f6" }, // 3. Nc3 Nf6
       // Add more steps here
     ];
@@ -110,38 +160,50 @@
     // piece values: wK,wQ,wR,wB,wN,wP and bK,bQ,bR,bB,bN,bP
     const WIN_CONDITION = { piece: "wQ", square: "e7" };
 
-    // The flag to show
-    const FLAG_TEXT = "BM{your_flag_goes_here}";
+    // Hint text (vague, but nudges them). One per step is nice.
+    const STEP_HINTS = [
+      "The center matters. Control it early.",
+      "A familiar pawn sacrifice tempts black…",
+      "Develop with purpose. Don’t move the same piece twice without a reason.",
+      "Keep going…"
+    ];
+
+    // More generic feedback
+    const WRONG_MOVE_HINTS = [
+      "Hmm… that doesn’t fit the idea.",
+      "Feels off. Think about the center.",
+      "Not quite. There’s a classic plan here.",
+      "Close, but the position wants something more principled."
+    ];
 
     // =========================
     // SETUP
     // =========================
 
-    var game = new Chess();
-    var step = 0;
+    const gameScreen = document.getElementById("gameScreen");
+    const successScreen = document.getElementById("successScreen");
+    const restartBtn = document.getElementById("restartBtn");
 
     const statusEl = document.getElementById("status");
-    const flagEl = document.getElementById("flag");
 
     function setStatus(msg) {
       statusEl.textContent = msg;
     }
 
-    function showFlag() {
-      flagEl.style.display = "block";
-      flagEl.textContent = "FLAG: " + FLAG_TEXT;
-      setStatus("Solved.");
+    function showSuccessScreen() {
+      gameScreen.style.display = "none";
+      successScreen.style.display = "block";
     }
 
     function toUCI(from, to) {
       return from + to;
     }
 
-    function makeMoveUCI(uci) {
+    function makeMoveUCI(uci, promotion) {
       return game.move({
         from: uci.slice(0, 2),
         to: uci.slice(2, 4),
-        promotion: "q"
+        promotion: promotion || "q"
       });
     }
 
@@ -154,81 +216,112 @@
 
     function checkWinCondition() {
       if (isPieceOnSquare(WIN_CONDITION.piece, WIN_CONDITION.square)) {
-        showFlag();
+        showSuccessScreen();
+        return true;
       }
+      return false;
     }
 
-    var board = Chessboard("board", {
-      draggable: true,
-      position: "start",
-      pieceTheme: "./assets/vendor/chessboardjs-1.0.0/img/chesspieces/wikipedia/{piece}.png",
+    function hintForStep(i) {
+      return STEP_HINTS[i] || "The plan continues…";
+    }
 
-      onDragStart: function (source, piece) {
-        // block moves after solved
-        if (flagEl.style.display === "block") return false;
+    function wrongHint(i) {
+      return WRONG_MOVE_HINTS[i % WRONG_MOVE_HINTS.length];
+    }
 
-        // only allow white pieces to be moved
-        if (piece.startsWith("b")) return false;
+    // -------------------------
+    // NEW GAME
+    // -------------------------
+    var game, board, step;
 
-        // also prevent moving if it isn't white's turn in chess.js
-        if (game.turn() !== "w") return false;
-      },
+    function newGame() {
+      game = new Chess();
+      step = 0;
 
-      onDrop: function (source, target) {
-        // no-op drop
-        if (source === target) return "snapback";
+      // Reset screens
+      successScreen.style.display = "none";
+      gameScreen.style.display = "block";
 
-        const expected = SCRIPT[step]?.w;
-        if (!expected) {
-          setStatus("No more scripted moves. Add more steps to SCRIPT.");
-          return "snapback";
-        }
+      // Create/Reset board
+      if (board) {
+        board.position("start");
+      } else {
+        board = Chessboard("board", {
+          draggable: true,
+          position: "start",
+          pieceTheme: "./assets/vendor/chessboardjs-1.0.0/img/chesspieces/wikipedia/{piece}.png",
 
-        const uci = toUCI(source, target);
+          onDragStart: function (source, piece) {
+            // only allow white pieces
+            if (piece.startsWith("b")) return false;
 
-        // enforce the exact required move for the CTF path
-        if (uci !== expected) {
-          setStatus("Wrong move. Expected: " + expected);
-          return "snapback";
-        }
+            // only allow white turn (prevents dragging during black auto-move)
+            if (game.turn() !== "w") return false;
 
-        // Apply white move
-        const wMove = makeMoveUCI(uci);
-        if (wMove === null) {
-          setStatus("Illegal move.");
-          return "snapback";
-        }
+            // if solved screen is up, block
+            if (successScreen.style.display === "block") return false;
+          },
 
-        // update visuals
-        board.position(game.fen());
+          onDrop: function (source, target) {
+            if (source === target) return "snapback";
 
-        // check if white just triggered win
-        checkWinCondition();
-        if (flagEl.style.display === "block") return;
+            const expected = SCRIPT[step]?.w;
 
-        // Apply black scripted reply
-        const bUci = SCRIPT[step].b;
-        const bMove = makeMoveUCI(bUci);
-        if (bMove === null) {
-          setStatus("Script error: black move illegal: " + bUci);
-          return;
-        }
+            // If we've run out of script, stop enforcing
+            if (!expected) {
+              setStatus("The board is quiet. (No more scripted moves.)");
+              return "snapback";
+            }
 
-        step++;
+            const uci = toUCI(source, target);
 
-        // update visuals again
-        board.position(game.fen());
+            // Enforce the exact move silently (no exact reveal)
+            if (uci !== expected) {
+              setStatus(wrongHint(step));
+              return "snapback";
+            }
 
-        // check after black move too (optional)
-        checkWinCondition();
+            // Apply White move
+            const wMove = makeMoveUCI(uci);
+            if (wMove === null) {
+              setStatus("Illegal move.");
+              return "snapback";
+            }
 
-        if (flagEl.style.display !== "block") {
-          setStatus("Good. Step " + (step + 1) + " of " + SCRIPT.length + ". Next: " + (SCRIPT[step]?.w || "(end)"));
-        }
+            board.position(game.fen());
+
+            // If win triggered, stop
+            if (checkWinCondition()) return;
+
+            // Black scripted reply
+            const bUci = SCRIPT[step].b;
+            const bMove = makeMoveUCI(bUci);
+
+            if (bMove === null) {
+              setStatus("The opponent hesitates… (script error)");
+              return;
+            }
+
+            step++;
+            board.position(game.fen());
+
+            // If win triggered, stop
+            if (checkWinCondition()) return;
+
+            // Give the next hint (vague)
+            setStatus(hintForStep(step));
+          }
+        });
       }
-    });
 
-    setStatus("Play the scripted line. Step 1: " + SCRIPT[0].w);
+      setStatus("White to move. " + hintForStep(0));
+    }
+
+    restartBtn.addEventListener("click", newGame);
+
+    // Start
+    newGame();
   </script>
 </body>
 </html>
