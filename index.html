@@ -160,7 +160,7 @@
 
     // Intermediate win condition:
     // After the opening is completed, if White's Queen lands on this square => success screen.
-    const QUEEN_TARGET_SQUARE = "e7";
+    const QUEEN_TARGET_SQUARE = "e5";
 
     // Image path shown on success screen (you provide this file)
     const FLAG_IMAGE_PATH = "./assets/flag.png";
@@ -217,14 +217,6 @@
       return from + to;
     }
 
-    function makeMoveUCI(uci, promotion) {
-      return game.move({
-        from: uci.slice(0, 2),
-        to: uci.slice(2, 4),
-        promotion: promotion || "q"
-      });
-    }
-
     function isWhiteQueenOn(square) {
       const sq = game.get(square); // {type:'q', color:'w'} or null
       return !!sq && sq.color === "w" && sq.type === "q";
@@ -246,7 +238,10 @@
         setStatus("White to move. " + (OPENING_HINTS[openingStep] || "Keep it classical."));
       } else {
         // rotate post-opening hints a bit
-        const idx = Math.min(POST_OPENING_HINTS.length - 1, Math.floor(Math.random() * POST_OPENING_HINTS.length));
+        const idx = Math.min(
+          POST_OPENING_HINTS.length - 1,
+          Math.floor(Math.random() * POST_OPENING_HINTS.length)
+        );
         setStatus(POST_OPENING_HINTS[idx]);
       }
     }
@@ -285,7 +280,6 @@
 
           onDrop: function (source, target) {
             if (source === target) return "snapback";
-
             const uci = toUCI(source, target);
 
             // =========================
@@ -308,7 +302,12 @@
               }
 
               // Apply White move
-              const wMove = makeMoveUCI(uci);
+              const wMove = game.move({
+                from: uci.slice(0, 2),
+                to: uci.slice(2, 4),
+                promotion: "q"
+              });
+
               if (wMove === null) {
                 setStatus("Illegal move.");
                 return "snapback";
@@ -317,7 +316,12 @@
 
               // Apply Black reply
               const bUci = OPENING[openingStep].b;
-              const bMove = makeMoveUCI(bUci);
+              const bMove = game.move({
+                from: bUci.slice(0, 2),
+                to: bUci.slice(2, 4),
+                promotion: "q"
+              });
+
               if (bMove === null) {
                 setStatus("The opponent hesitates… (script error)");
                 return;
@@ -338,25 +342,27 @@
             // PHASE 2: Free play + queen target
             // =========================
 
-            // Allow any legal move now
             const move = game.move({
               from: source,
               to: target,
               promotion: "q"
             });
 
-            if (move === null) return "snapback";
+            // illegal move → snap back cleanly (prevents desync/bricking)
+            if (move === null) {
+              setStatus("That move isn’t legal.");
+              return "snapback";
+            }
 
+            // sync the visual board with chess.js
             board.position(game.fen());
 
-            // Intermediate win condition:
-            // if white queen is on target square, show success screen
+            // success condition: white queen reaches target square
             if (isWhiteQueenOn(QUEEN_TARGET_SQUARE)) {
               showSuccessScreen();
               return;
             }
 
-            // Light nudge after each move
             updateHints();
           }
         });
